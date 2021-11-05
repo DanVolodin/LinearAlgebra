@@ -37,8 +37,6 @@ class Matrix:
     def __add__(self, other):
         n, m = self.size()
         n_, m_ = other.size()
-        if n != n_ or m != m_:
-            raise MatrixError(self, other)
         new_matrix = Matrix.zero_matrix(n, m)
         for i in range(n):
             for j in range(m):
@@ -48,8 +46,6 @@ class Matrix:
     def __iadd__(self, other):
         n, m = self.size()
         n_, m_ = other.size()
-        if n != n_ or m != m_:
-            raise MatrixError(self, other)
         for i in range(n):
             for j in range(m):
                 self.matrix[i][j] += other.matrix[i][j]
@@ -67,8 +63,6 @@ class Matrix:
 
         if isinstance(other, Matrix):
             n_, m_ = other.size()
-            if m != n_:
-                raise MatrixError(self, other)
             new_n = n
             new_m = m_
             len_ = m
@@ -100,8 +94,6 @@ class Matrix:
 
         if isinstance(other, Matrix):
             n_, m_ = other.size()
-            if m != n_:
-                raise MatrixError(self, other)
             new_n = n
             new_m = m_
             len_ = m
@@ -157,6 +149,45 @@ class Matrix:
                 new_matrix[i][j] = matrix.matrix[j][i]
         return Matrix(new_matrix)
 
+    def add_line(self, i, j, x):
+        n, m = self.size()
+        for k in range(m):
+            self.matrix[i][k] += x * self.matrix[j][k]
+        return self
+
+    def swap_line(self, i, j):
+        self.matrix[i], self.matrix[j] = self.matrix[j], self.matrix[i]
+        return self
+
+    def mult_line(self, i, x):
+        n, m = self.size()
+        for k in range(m):
+            self.matrix[i][k] *= x
+        return self
+
+    def det(self):
+        n, m = self.size()
+        new_matrix = deepcopy(self)
+        val_mult = 1
+        val_diagonal = 1
+        for i in range(n):
+            pos = i
+            while pos < n and new_matrix.matrix[pos][i] == 0:
+                pos += 1
+            if pos == n:
+                return 0
+            if pos != i:
+                new_matrix.swap_line(i, pos)
+                val_mult *= -1
+            for j in range(i + 1, n):
+                i_val = new_matrix.matrix[i][i]
+                j_val = new_matrix.matrix[j][i]
+                new_matrix.mult_line(j, i_val)
+                val_mult *= new_matrix.matrix[i][i]
+                new_matrix.add_line(j, i, -j_val)
+            val_diagonal *= new_matrix.matrix[i][i]
+        return val_diagonal // val_mult
+
 
 class Polynomial:
     def __init__(self, power, *coefficients):
@@ -164,13 +195,11 @@ class Polynomial:
         self.coef = coefficients
 
     def __call__(self, x):
-        res = self.coef[self.power] * x**self.power
+        res = self.coef[self.power] * x ** self.power
         for i in range(self.power):
-            res += self.coef[i] * x**i
+            res += self.coef[i] * x ** i
         return res
 
 
-class MatrixError(Exception):
-    def __init__(self, m1, m2):
-        self.matrix1 = m1
-        self.matrix2 = m2
+# To have fun and solve Linear Algebra create matrices using lists
+# Now you can use all the operands and some other functions
